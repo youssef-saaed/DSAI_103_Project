@@ -1,22 +1,42 @@
+# Import libs module which have all needed libraries
 from libs import *
 
 
+# Defining getFrames function which takes video file path and target location for saving frames and starting frame and ending frame
+# It save frames selected in targeted location and return numpy array with frames in the second return and in the first return the shape of that array
 def getFrames(file: str, target: str, start: int, end: int):
+    # Checking if the targeted place for saving doesn't exist it is created
     if not os.path.exists(f"./{target}"):
         os.makedirs(target)
+
+    # Creating VideoCapture object with the file location
     vid = cv2.VideoCapture(file)
+
+    # Defining i for iterating
     i = 0
+
+    # Read the first frame in the video with read() function which return boolean of success and the upcoming frame
     ret, frame = vid.read()
+
+    # Creating a numpy array which will be a container for the frames
     frames = np.zeros((end - start + 1, frame.shape[0], frame.shape[1], 3), dtype="uint8")
+
+    # Looping until the video end or the ending frame number come
+    # In every iteration, if i in the range of selected frames numbers it save this frame in the targeted location
+    # Then increase i by 1 and read the upcoming frame
     while ret and i <= end:
         if i >= start and i <= end:
             cv2.imwrite(f"./{target}/frame_{i - start}.png", frame)
             frames[i - start] = frame
         i += 1
         ret, frame = vid.read()
+
+    # At the end returning numpy array "frames" shape and array itself
     return frames.shape, frames
 
 
+# Defining maskPlayers function which take the frame and player color
+# It return the original frame in RGB and the mask of players
 def maskPlayers(img: np.ndarray, c: str):
     imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
@@ -25,34 +45,46 @@ def maskPlayers(img: np.ndarray, c: str):
 
     Bupper = (100, 124, 182)
     Blower = (37, 60, 98)
+
     if c == "Y" or c == "y":
         maskY = cv2.inRange(imgRGB, Ylower, Yupper)
         return imgRGB, maskY
+
     maskB = cv2.inRange(imgRGB, Blower, Bupper)
+
     return imgRGB, maskB
 
 
+# Defining applyMask function which take frame and a mask for that frame
+# It return a new image that have frame pixels which only exists in the mask
 def applyMask(img: np.ndarray, mask: np.ndarray):
     maskedImg = np.zeros(img.shape, dtype="uint8")
+
     for i in range(img.shape[0]):
         for j in range(img.shape[1]):
             if mask[i, j] == 255:
                 maskedImg[i, j] = img[i, j]
             else:
                 maskedImg[i, j] = np.array([255, 255, 255])
+
     return maskedImg
 
 
+# This function defined takes two images and join them in new image with a width of sum of two images width and height with the highest height of two images
+# It join the two picture by putting the first image in the new created image and then put the second image in the end position of first image and then return joined image
 def joinImages(img1: np.ndarray, img2: np.ndarray):
     joinedImage = np.zeros(
         (img1.shape[0] if img1.shape[0] > img2.shape[0] else img2.shape[0], img1.shape[1] + img2.shape[1], 3),
         dtype="uint8")
+
     for i in range(img1.shape[0]):
         for j in range(img1.shape[1]):
             joinedImage[i, j] = img1[i, j]
+
     for i in range(img2.shape[0]):
         for j in range(img2.shape[1]):
             joinedImage[i, j + img1.shape[1] - 1] = img2[i, j]
+
     return joinedImage
 
 
