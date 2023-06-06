@@ -17,7 +17,7 @@ def getFrames(file: str, target: str, start: int, end: int):
     return frames.shape, frames
 
 
-def maskPlayers(img: np.ndarray,c:str):
+def maskPlayers(img: np.ndarray, c: str):
     imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
     Ylower = (140, 110, 71)
@@ -25,7 +25,7 @@ def maskPlayers(img: np.ndarray,c:str):
 
     Bupper = (100, 124, 182)
     Blower = (37, 60, 98)
-    if c=="Y" or c=="y":
+    if c == "Y" or c == "y":
         maskY = cv2.inRange(imgRGB, Ylower, Yupper)
         return imgRGB, maskY
     maskB = cv2.inRange(imgRGB, Blower, Bupper)
