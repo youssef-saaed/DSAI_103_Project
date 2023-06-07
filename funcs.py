@@ -88,11 +88,16 @@ def joinImages(img1: np.ndarray, img2: np.ndarray):
     return joinedImage
 
 
-def getNewBallPosition(cballMask: np.ndarray, lPosition: tuple, threshold: float, ballSize, change: int):
+# This function take ball mask, last position for ball, threshold for change, ball size and position change amount for testing
+# It returns new position
+def getNewBallPosition(cballMask: np.ndarray, lPosition: tuple, threshold: float, ballSize: int, change: int):
+    # Defining position change for its direction
     upM = lPosition[1] - change
     downM = lPosition[1] + change
     rightM = lPosition[0] + change
     leftM = lPosition[0] - change
+
+    # Calculating pixel density in each direction
     up = sum(sum(cballMask[upM:upM + ballSize, lPosition[0]:lPosition[0] + ballSize]))
     down = sum(sum(cballMask[downM:downM + ballSize, lPosition[0]:lPosition[0] + ballSize]))
     right = sum(sum(cballMask[lPosition[1]:lPosition[1] + ballSize, rightM:rightM + ballSize]))
@@ -102,7 +107,9 @@ def getNewBallPosition(cballMask: np.ndarray, lPosition: tuple, threshold: float
     downRight = sum(sum(cballMask[downM:downM + ballSize, rightM:rightM + ballSize]))
     downLeft = sum(sum(cballMask[downM:downM + ballSize, leftM:leftM + ballSize]))
     center = sum(sum(cballMask[lPosition[1]:lPosition[1] + ballSize, lPosition[0]:lPosition[0] + ballSize]))
-    if not (center >= 2500 - 2500 * threshold):
+
+    # If the current position pixel density is less than threshold density the new position is the maximum pixel density's position
+    if center <= 2500 - 2500 * threshold:
         maxDens = max(up, down, right, left, upRight, downRight, upLeft, downLeft)
         if maxDens == up:
             lPosition = (lPosition[0], lPosition[1] - change)
@@ -120,16 +127,22 @@ def getNewBallPosition(cballMask: np.ndarray, lPosition: tuple, threshold: float
             lPosition = (lPosition[0] - change, lPosition[1] - change)
         elif maxDens == downLeft:
             lPosition = (lPosition[0] - change, lPosition[1] + change)
+
+    # Returning new position
     return lPosition
 
 
-def detectBall(frames: np.ndarray, size: tuple, initialPos: tuple, ballSize):
+# Defining detectBall function which take the frames for detection, shape of frames numpy array, initial position and ballSize
+# It returns copy of frames array which have rectangle marks follow ball position and positions array
+def detectBall(frames: np.ndarray, size: tuple, initialPos: tuple, ballSize: int):
     markedFrames = frames.copy()
+    positions = np.zeros((size[0], 2))
     mFrame = cv2.cvtColor(markedFrames[0], cv2.COLOR_BGR2RGB)
     ballLower = (180, 180, 180)
     ballUpper = (255, 255, 255)
     ballMask = cv2.inRange(mFrame, ballLower, ballUpper)
     lPosition = initialPos
+    positions[0] = np.array(lPosition)
     cv2.rectangle(mFrame, lPosition, (lPosition[0] + ballSize, lPosition[1] + ballSize), (255, 0, 0), 1)
     cv2.rectangle(ballMask, lPosition, (lPosition[0] + ballSize, lPosition[1] + ballSize), (255, 0, 0), 1)
     markedFrames[0] = mFrame
@@ -140,7 +153,8 @@ def detectBall(frames: np.ndarray, size: tuple, initialPos: tuple, ballSize):
         cFrame = cv2.cvtColor(markedFrames[i], cv2.COLOR_BGR2RGB)
         cballMask = cv2.inRange(cFrame, ballLower, ballUpper)
         lPosition = getNewBallPosition(cballMask, lPosition, threshold, ballSize, change)
+        positions[i] = np.array(lPosition)
         cv2.rectangle(cFrame, lPosition, (lPosition[0] + ballSize, lPosition[1] + ballSize), (255, 0, 0), 1)
         cv2.rectangle(cballMask, lPosition, (lPosition[0] + ballSize, lPosition[1] + ballSize), (255, 0, 0), 1)
         markedFrames[i] = cFrame
-    return markedFrames
+    return markedFrames, positions

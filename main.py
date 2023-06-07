@@ -4,8 +4,8 @@ from funcs import *
 # Get and save all our selected frames and put them in numpy array and get its shape and the array itself
 shape, frames = getFrames("vid.mp4", "./frames", 737, 850)
 
-# Get all frames with rectangle mark on the ball in each frame
-detectedBallFrames = detectBall(frames, shape, (330, 184), 10)
+# Get all frames with rectangle mark on the ball in each frame and positions coordinates
+detectedBallFrames, detectedBallPositions = detectBall(frames, shape, (330, 184), 10)
 
 # Loop over every frame and use maskPlayer function on the frame with "Y" argument to mask players in yellow t-shirts
 # Then apply mask on original image then convert color to BGR to display using cv2
@@ -64,6 +64,10 @@ cv2.destroyAllWindows()
 for i in range(shape[0]):
     # Convert the joined image to BGR mode to display correct colors for cv2
     dispImg = cv2.cvtColor(detectedBallFrames[i], cv2.COLOR_RGB2BGR)
+
+    # Adding coordinates text to image
+    cv2.putText(dispImg, f"Pos: ( {detectedBallPositions[i][0]} , {detectedBallPositions[i][0]} )", (20, 40),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 1)
 
     # Displaying image
     cv2.imshow("Ball detection", dispImg)
